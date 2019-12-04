@@ -61,7 +61,6 @@ fn endpoints_on_segments(wire: Vec<Segment>) -> Vec<(Point, Point)> {
             Direction::Right => end_point.x = end_point.x + seg.length as i32,
             Direction::Left => end_point.x = end_point.x - seg.length as i32,
         }
-        println!("Current point: {} {}", end_point.x, end_point.y);
         result.push((start_point, end_point));
     }
     result
