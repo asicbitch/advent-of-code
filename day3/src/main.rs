@@ -7,12 +7,19 @@ enum Direction {
     Left,
 }
 
+#[derive(PartialEq)]
+enum Orientation {
+    Clockwise,
+    Counterclockwise,
+    Colinear,
+}
+
 struct Segment {
     dir: Direction,
     length: u32,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Copy)]
 struct Point {
     x: i32,
     y: i32,
@@ -43,38 +50,66 @@ fn segments_from_line(line: String) -> Vec<Segment> {
     result
 }
 
-fn points_on_wire(wire: Vec<Segment>) -> Vec<Point> {
-    let mut result: Vec<Point> = Vec::new();
-    let mut current_point = Point { x: 0, y: 0 };
+fn endpoints_on_segments(wire: Vec<Segment>) -> Vec<(Point, Point)> {
+    let mut result: Vec<(Point, Point)> = Vec::new();
+    let mut end_point = Point { x: 0, y: 0 };
     for seg in wire {
+        let start_point = end_point.clone();
         match seg.dir {
-            Direction::Up => {
-                for _n in 1..seg.length + 1 {
-                    current_point.y = current_point.y + 1;
-                    result.push(current_point.clone());
-                }
-            }
-            Direction::Down => {
-                for _n in 1..seg.length + 1 {
-                    current_point.y = current_point.y - 1;
-                    result.push(current_point.clone());
-                }
-            }
-            Direction::Right => {
-                for _n in 1..seg.length + 1 {
-                    current_point.x = current_point.x + 1;
-                    result.push(current_point.clone());
-                }
-            }
-            Direction::Left => {
-                for _n in 1..seg.length + 1 {
-                    current_point.x = current_point.x - 1;
-                    result.push(current_point.clone());
-                }
-            }
+            Direction::Up    => end_point.y = end_point.y + seg.length as i32,
+            Direction::Down  => end_point.y = end_point.y - seg.length as i32,
+            Direction::Right => end_point.x = end_point.x + seg.length as i32,
+            Direction::Left  => end_point.x = end_point.x - seg.length as i32,
         }
+        println!("Current point: {} {}", end_point.x, end_point.y);
+        result.push((start_point, end_point));
     }
     result
+}
+
+fn get_orientation(p1: Point, p2: Point, p3: Point) -> Orientation {
+    let result = (p2.y - p1.y) * (p3.x - p2.x) - (p2.x - p1.x) * (p3.y - p2.y);
+    if result > 0 {
+        return Orientation::Clockwise;
+    } else if result < 0 {
+        return Orientation::Counterclockwise;
+    } else {
+        return Orientation::Colinear;
+    }
+}
+
+fn find_intersection(wire_a: (Point, Point), wire_b: (Point, Point)) -> Option<Point> {
+    let o1 = get_orientation(wire_a.0, wire_a.1, wire_b.0);
+    let o2 = get_orientation(wire_a.0, wire_a.1, wire_b.1);
+    let o3 = get_orientation(wire_b.0, wire_b.1, wire_a.0);
+    let o4 = get_orientation(wire_b.0, wire_b.1, wire_a.1);
+
+    if (o1 != o2) && (o3 != o4) {
+        if wire_a.0.x == wire_a.1.x {
+            return Some(Point { x: wire_a.0.x, y: wire_b.0.y} );
+        } else {
+            return Some(Point { x: wire_b.0.x, y: wire_a.0.y} );
+        }
+    }
+    None
+    /*if wire_a.0.x == wire_a.1.x {
+        if ((wire_b.0.x < wire_a.0.x) && (wire_b.1.x > wire_a.0.x)) ||
+            ((wire_b.0.x > wire_a.0.x) && (wire_b.1.x < wire_a.0.x)) &&
+            ((wire_b.0.y > wire_a.0.y) && (wire_b.1.y < wire_a.1.y) ||
+             (wire_b.0.y < wire_a.0.y) && (wire_b.1.y > wire_a.1.y)) {
+                println!("Points A: {} {}, {} {}", wire_a.0.x, wire_a.0.y, wire_a.1.x, wire_a.1.y);
+                println!("Points B: {} {}, {} {}", wire_b.0.x, wire_b.0.y, wire_b.1.x, wire_b.1.y);
+                return Some(Point { x: wire_a.0.x, y: wire_b.0.y });
+        }
+    } else {
+        if ((wire_b.0.y < wire_a.0.y) && (wire_b.1.y > wire_b.0.y)) ||
+            ((wire_b.0.y > wire_a.0.y) && (wire_b.1.y < wire_b.0.y)) &&
+            ((wire_b.0.x > wire_a.0.x) && (wire_b.1.x < wire_a.1.x) ||
+             (wire_b.0.x < wire_a.0.x) && (wire_b.1.x > wire_a.1.x)) {
+                return Some(Point { x: wire_b.0.x, y: wire_a.0.y });
+        }
+}*/ 
+   // return None;
 }
 
 fn main() {
@@ -90,21 +125,25 @@ fn main() {
     let first_wire = segments_from_line(first_string);
     let second_wire = segments_from_line(second_string);
 
-    // get all points on each wire
-    let first_points = points_on_wire(first_wire);
-    let second_points = points_on_wire(second_wire);
+    // each wire in terms of it's endpoints 
+    let first_points = endpoints_on_segments(first_wire);
+    let second_points = endpoints_on_segments(second_wire);
 
-    // find matching points
-    let mut common_points: Vec<Point> = Vec::new();
-    for pt in first_points {
-        if second_points.contains(&pt) {
-            common_points.push(pt);
+    // find intersections
+    let mut intersections: Vec<Point> = Vec::new();
+    for first_seg in first_points {
+        let points_temp = second_points.clone();
+        for second_seg in points_temp {
+            match find_intersection(first_seg, second_seg) {
+                Some(val) => intersections.push(val),
+                None        => continue,
+            }
         }
     }
 
     // find common point with smallest Manhattan distance from origin
     let mut smallest_distance = std::i32::MAX;
-    for pt in common_points {
+    for pt in intersections {
         let distance = pt.x.abs() + pt.y.abs();
         if distance < smallest_distance {
             smallest_distance = distance;
