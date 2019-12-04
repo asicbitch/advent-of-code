@@ -56,10 +56,10 @@ fn endpoints_on_segments(wire: Vec<Segment>) -> Vec<(Point, Point)> {
     for seg in wire {
         let start_point = end_point.clone();
         match seg.dir {
-            Direction::Up    => end_point.y = end_point.y + seg.length as i32,
-            Direction::Down  => end_point.y = end_point.y - seg.length as i32,
+            Direction::Up => end_point.y = end_point.y + seg.length as i32,
+            Direction::Down => end_point.y = end_point.y - seg.length as i32,
             Direction::Right => end_point.x = end_point.x + seg.length as i32,
-            Direction::Left  => end_point.x = end_point.x - seg.length as i32,
+            Direction::Left => end_point.x = end_point.x - seg.length as i32,
         }
         println!("Current point: {} {}", end_point.x, end_point.y);
         result.push((start_point, end_point));
@@ -86,30 +86,18 @@ fn find_intersection(wire_a: (Point, Point), wire_b: (Point, Point)) -> Option<P
 
     if (o1 != o2) && (o3 != o4) {
         if wire_a.0.x == wire_a.1.x {
-            return Some(Point { x: wire_a.0.x, y: wire_b.0.y} );
+            return Some(Point {
+                x: wire_a.0.x,
+                y: wire_b.0.y,
+            });
         } else {
-            return Some(Point { x: wire_b.0.x, y: wire_a.0.y} );
+            return Some(Point {
+                x: wire_b.0.x,
+                y: wire_a.0.y,
+            });
         }
     }
     None
-    /*if wire_a.0.x == wire_a.1.x {
-        if ((wire_b.0.x < wire_a.0.x) && (wire_b.1.x > wire_a.0.x)) ||
-            ((wire_b.0.x > wire_a.0.x) && (wire_b.1.x < wire_a.0.x)) &&
-            ((wire_b.0.y > wire_a.0.y) && (wire_b.1.y < wire_a.1.y) ||
-             (wire_b.0.y < wire_a.0.y) && (wire_b.1.y > wire_a.1.y)) {
-                println!("Points A: {} {}, {} {}", wire_a.0.x, wire_a.0.y, wire_a.1.x, wire_a.1.y);
-                println!("Points B: {} {}, {} {}", wire_b.0.x, wire_b.0.y, wire_b.1.x, wire_b.1.y);
-                return Some(Point { x: wire_a.0.x, y: wire_b.0.y });
-        }
-    } else {
-        if ((wire_b.0.y < wire_a.0.y) && (wire_b.1.y > wire_b.0.y)) ||
-            ((wire_b.0.y > wire_a.0.y) && (wire_b.1.y < wire_b.0.y)) &&
-            ((wire_b.0.x > wire_a.0.x) && (wire_b.1.x < wire_a.1.x) ||
-             (wire_b.0.x < wire_a.0.x) && (wire_b.1.x > wire_a.1.x)) {
-                return Some(Point { x: wire_b.0.x, y: wire_a.0.y });
-        }
-}*/ 
-   // return None;
 }
 
 fn main() {
@@ -125,7 +113,7 @@ fn main() {
     let first_wire = segments_from_line(first_string);
     let second_wire = segments_from_line(second_string);
 
-    // each wire in terms of it's endpoints 
+    // each wire in terms of it's endpoints
     let first_points = endpoints_on_segments(first_wire);
     let second_points = endpoints_on_segments(second_wire);
 
@@ -136,7 +124,7 @@ fn main() {
         for second_seg in points_temp {
             match find_intersection(first_seg, second_seg) {
                 Some(val) => intersections.push(val),
-                None        => continue,
+                None => continue,
             }
         }
     }
